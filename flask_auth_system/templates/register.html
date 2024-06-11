@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <title>flask auth system</title>
+  <title>Register page</title>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.6.2/dist/css/bootstrap.min.css">
@@ -13,28 +13,27 @@
 
 <div class="container">
     <div class="row justify-content-center">
-        <div><col-sm-6></div>
-        <div>
-            <h2>register form</h2>
-            <form action="/register",method='POST'>
-              <div class="form-group">
+        <div class="col-sm-8">
+            <h2>Register form</h2>
+            <form action="/register"  method="POST">
+                <div class="form-group">
                 <label for="name">Name:</label>
                 <input type="text" class="form-control" id="name" placeholder="Enter name" name="name">
-              </div>
-
-              <div class="form-group">
+                </div>
+                <div class="form-group">
                 <label for="email">Email:</label>
                 <input type="email" class="form-control" id="email" placeholder="Enter email" name="email">
-              </div>
-
-              <div class="form-group">
-                <label for="password">Password:</label>
-                <input type="password" class="form-control" id="password" placeholder="Enter password" name="pswd">
-              </div>
-              <button type="submit" class="btn btn-dark">Submit</button>
+                </div>
+                <div class="form-group">
+                <label for="pwd">Password:</label>
+                <input type="password" class="form-control" id="pwd" placeholder="Enter password" name="password">
+                </div>
+                <button type="submit" class="btn btn-dark">Submit</button>
+                <a href="/register" class="btn btn-primary">Register</a>
             </form>
-        </div>
-</div>
+        <div>
+
+    </div>
 
 </body>
 </html>

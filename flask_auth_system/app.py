@@ -1,66 +1,83 @@
-from flask import Flask, request, render_template
-from flask_login import LoginManager, UserMixin, login_user, login_required, logout_user, current_user
-from flask_mysqldb import MySQL
+from flask import Flask, request, render_template,redirect,session
+from flask_sqlalchemy import SQLAlchemy
+import bcrypt
 
 app = Flask(__name__)
-app.secret_key = "dfghjk234567dfgh45678"
+app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///database.db'
+db = SQLAlchemy(app)
+app.secret_key = 'secret_key'
 
-# Initialize Flask-Login
-login_manager = LoginManager()
-login_manager.init_app(app)
 
-# Configure MySQL
-app.config['MYSQL_HOST'] = 'localhost'  # Replace with your MySQL host
-app.config['MYSQL_USER'] = 'username'   # Replace with your MySQL username
-app.config['MYSQL_PASSWORD'] = 'password'  # Replace with your MySQL password
-app.config['MYSQL_DB'] = 'database'  # Replace with your MySQL database name
+class User(db.Model):
+    id=db.Column(db.Integer, primary_key=True)
+    name=db.Column(db.String(100),nullable=False)
+    email=db.Column(db.String(100),unique=True)
+    password=db.Column(db.String(100))    
+    
+    def __init__(self, name, email, password):
+        self.name = name
+        self.email = email
+        self.password = bcrypt.hashpw(password.encode('utf-8'),bcrypt.gensalt()).decode('utf-8')
+        
+    def check_password(self,password):
+        return bcrypt.checkpw(password.encode('utf-8'),self.password.encode('utf-8'))
+    
+    
+with app.app_context():
+    db.create_all()
 
-mysql = MySQL(app)
-
-# Define User model for Flask-Login
-class User(UserMixin):
-    pass
-
-@login_manager.user_loader
-def load_user(user_id):
-    # Load user from the database based on user_id
-    cursor = mysql.connection.cursor()
-    cursor.execute("SELECT * FROM users WHERE id = %s", (user_id,))
-    data = cursor.fetchone()
-    if data:
-        user = User()
-        user.id = data[0]
-        # Set other user attributes as needed
-        return user
-    else:
-        return None
 
 @app.route('/')
 def index():
     return 'Home page'
 
-@app.route('/login', methods=['GET', 'POST'])
-def login():
-    if request.method == 'POST':
-        # Handle login logic
-        # Example: Verify username and password from form data
-        # If valid, log the user in using login_user(user)
-        pass
-    return render_template('login.html')
-
 @app.route('/register', methods=['GET', 'POST'])
 def register():
     if request.method == 'POST':
-        # Handle registration logic
-        # Example: Insert new user into the database
-        # Retrieve form data like request.form['name'], request.form['email'], etc.
-        pass
+       name= request.form['name']
+       email= request.form['email']
+       password= request.form['password']
+       
+       new_user =User(name=name, email=email, password=password)
+       db.session.add(new_user)
+       db.session.commit()
+       return redirect('/login')
     return render_template('register.html')
 
+
+@app.route('/login', methods=['GET', 'POST'])
+def login():
+    if request.method == 'POST':
+       email= request.form['email']
+       password= request.form['password']
+       
+       user =User.query.filter_by(email=email).first()
+       
+       if user and user.check_password(password):
+             session['email'] = user.email
+             session['name'] = user.name
+             
+             return redirect('/dashboard')
+       else:
+           return render_template('login.html',error='Invalid User')
+         
+       
+    return render_template('login.html')
+
+
 @app.route('/dashboard')
-@login_required
 def dashboard():
-    return 'Dashboard page'
+    if session['name']:
+        user = User.query.filter_by(email=session['email']).first()
+        return render_template('dashboard.html',user=user)
+        
+    return redirect('/login')
+
+@app.route('/logout')
+def logout():
+        session.pop('email',None)
+        session.pop('name',None)
+        return redirect('/login')
 
 if __name__ == '__main__':
     app.run(debug=True)
